@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RK3576 滑坡检测台</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">RK</span>
+      <div><strong>滑坡检测台</strong><small>RK3576 · INT8 · RTSP</small></div>
+    </div>
+    <div class="connection">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-label">链路未启动</span>
+      <span class="clock" id="clock">--:--:--</span>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="viewer-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">DETECTED STREAM</span>
+          <h1>实时检测预览</h1>
+        </div>
+        <div class="stream-actions">
+          <button class="icon-button" id="mute-button" title="静音/取消静音" aria-label="静音/取消静音">M</button>
+          <button class="icon-button" id="fullscreen-button" title="全屏" aria-label="全屏">⛶</button>
+        </div>
+      </div>
+      <div class="video-shell" id="video-shell">
+        <video id="detected-video" muted autoplay playsinline controls></video>
+        <div class="video-empty" id="video-empty">
+          <span class="scanline"></span>
+          <strong>等待检测流</strong>
+        </div>
+        <div class="live-badge"><span></span>LIVE</div>
+        <div class="video-stats">
+          <div><span>FPS</span><strong id="fps">0.0</strong></div>
+          <div><span>推理</span><strong id="inference-ms">0.0 ms</strong></div>
+          <div><span>流水线</span><strong id="pipeline-ms">0.0 ms</strong></div>
+          <div><span>检测</span><strong id="detections">0</strong></div>
+        </div>
+      </div>
+      <div class="stream-footer">
+        <code id="detected-url">rtsp://10.8.30.29:8554/detected</code>
+        <span id="frame-counter">0 帧</span>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <section class="control-section">
+        <div class="section-title"><span>01</span><h2>流控制</h2></div>
+        <label class="upload-zone" id="upload-zone">
+          <input type="file" id="video-file" accept="video/*">
+          <span class="upload-icon">↑</span>
+          <strong>上传测试视频</strong>
+          <small id="upload-copy">MP4 / MKV / MOV / AVI</small>
+          <progress id="upload-progress" max="100" value="0"></progress>
+        </label>
+        <label class="field-label" for="video-select">视频源</label>
+        <select id="video-select"><option value="">请选择已上传视频</option></select>
+        <label class="field-label" for="model-select">RKNN 模型</label>
+        <select id="model-select"><option value="">正在读取板端模型</option></select>
+        <div class="control-grid">
+          <label><span>置信度</span><input id="conf" type="number" min="0.01" max="0.99" step="0.01" value="0.35"></label>
+          <label><span>输出 FPS</span><input id="output-fps" type="number" min="1" max="60" step="1" value="25"></label>
+          <label><span>NPU 核</span><select id="cores"><option value="both">双核</option><option value="core0">Core 0</option><option value="core1">Core 1</option><option value="auto">自动</option></select></label>
+            <label><span>编码器</span><select id="encoder"><option value="libx264">H.264 CPU（板端可用）</option></select></label>
+        </div>
+        <div class="command-row">
+          <button class="primary-button" id="start-button">启动实时链路</button>
+          <button class="stop-button" id="stop-button" title="停止" aria-label="停止">■</button>
+        </div>
+        <p class="error-message" id="error-message"></p>
+      </section>
+
+      <section class="image-section">
+        <div class="section-title"><span>02</span><h2>单图检测</h2></div>
+        <label class="image-upload" id="image-upload-zone">
+          <input type="file" id="image-file" accept="image/jpeg,image/png,image/webp">
+          <strong>上传图片检测</strong>
+          <small>使用上方选中的 RKNN 模型，最大 16 MB</small>
+        </label>
+        <div class="image-result-shell hidden" id="image-result-shell">
+          <img id="image-result" alt="检测结果">
+        </div>
+        <div class="image-result-meta" id="image-result-meta">等待上传图片</div>
+      </section>
+
+      <section class="metrics-section">
+        <div class="section-title"><span>03</span><h2>边缘负载</h2></div>
+        <div class="metric" data-key="cpu">
+          <div><span>CPU</span><strong id="cpu-value">0%</strong></div><div class="meter"><i id="cpu-meter"></i></div>
+        </div>
+        <div class="metric" data-key="npu">
+          <div><span>NPU</span><strong id="npu-value">0%</strong></div><div class="meter"><i id="npu-meter"></i></div>
+        </div>
+        <div class="metric" data-key="memory">
+          <div><span>系统内存</span><strong id="memory-value">0%</strong></div><div class="meter"><i id="memory-meter"></i></div>
+          <small id="memory-detail">0 / 0 GB</small>
+        </div>
+        <div class="metric" data-key="npu-memory">
+          <div><span>NPU 进程内存*</span><strong id="npu-memory-value">0 MB</strong></div><div class="meter"><i id="npu-memory-meter"></i></div>
+          <small>驱动未暴露专用显存，显示 RKNN 进程 RSS</small>
+        </div>
+        <div class="core-row">
+          <div><span>Core 0</span><strong id="core0">0%</strong></div>
+          <div><span>Core 1</span><strong id="core1">0%</strong></div>
+          <div><span>NPU 频率</span><strong id="npu-frequency">0 MHz</strong></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="telemetry-strip">
+      <div><span>预处理</span><strong id="preprocess-ms">0.0 ms</strong></div>
+      <div><span>后处理</span><strong id="postprocess-ms">0.0 ms</strong></div>
+      <div><span>采集到发布</span><strong id="capture-latency">0.0 ms</strong></div>
+      <div><span>丢弃旧帧</span><strong id="dropped-frames">0</strong></div>
+      <div class="url-cell"><span>输入流</span><code id="source-url">rtsp://10.8.30.29:8554/input</code></div>
+    </section>
+  </main>
+
+  <script src="/hls.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

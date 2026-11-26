@@ -1,0 +1,19 @@
+{
+  "server_url": "http://10.8.30.64:8080",
+  "device_name": "kickpi",
+  "device_interface": "",
+  "state_file": "./agent-state.json",
+  "allowed_target_dir": "./received-firmware",
+  "heartbeat_interval_seconds": 60,
+  "websocket_reconnect_max_seconds": 60,
+  "file_download_timeout_seconds": 1800,
+  "terminal": {
+    "enabled": true,
+    "shells": ["/bin/bash"],
+    "max_sessions": 2
+  },
+  "sku": "RK3576",
+  "runtime_version": "2.0",
+  "model_version": "2.0",
+  "address": "10.8.30.54"
+}

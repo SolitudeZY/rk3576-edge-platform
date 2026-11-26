@@ -1,0 +1,8 @@
+# Host-side dependencies for ONNX graph surgery / RKNN conversion.
+#
+# RKNN-Toolkit2 2.3.2 does not ship on PyPI; install Rockchip's x86_64 wheel
+# inside a dedicated Linux Python 3.10 environment, e.g.:
+#   pip install rknn_toolkit2-2.3.2-cp310-cp310-linux_x86_64.whl
+#
+# Only the pure-Python ONNX dependency is pinned here.
+onnx>=1.14

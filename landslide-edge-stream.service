@@ -1,0 +1,20 @@
+[Unit]
+Description=RK3576 landslide RTSP inference service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kickpi
+Group=kickpi
+WorkingDirectory=/home/kickpi/landslide/rk3576_deploy
+ExecStartPre=+/bin/sh -c '/bin/chmod o+x /sys/kernel/debug /sys/kernel/debug/rknpu 2>/dev/null || true'
+ExecStartPre=+/bin/sh -c '/bin/chmod o+r /sys/kernel/debug/rknpu/load /sys/kernel/debug/rknpu/freq 2>/dev/null || true'
+ExecStart=/home/kickpi/miniconda3/envs/rknn/bin/python /home/kickpi/landslide/rk3576_deploy/edge_rtsp_service.py --host 0.0.0.0 --port 8090
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=20
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
